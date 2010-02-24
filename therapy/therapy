@@ -1,0 +1,629 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-1 -*-
+#
+# theraPY
+# A simple Chat Software for PSYC
+#
+# Copyright (c) 2003,2004 by Andreas Neue
+#
+# $Id: therapy,v 1.43 2005/02/10 21:28:23 fippo Exp $
+
+try:
+    from twisted.internet import gtk2reactor
+    gtk2reactor.install()
+    from twisted.internet import reactor, task
+    twisting = True
+except ImportError:
+    import asyncore
+    twisting = False
+
+import gc
+
+import os, sys, time, string, socket
+import gtk, pango
+import ConfigParser
+
+from pypsyc.objects import PSYCObject
+from pypsyc.center import Center
+from pypsyc.center import Client, Authenticator
+from pypsyc import parsetext, parseURL
+
+conn = None
+
+nl = '\n'
+
+release = "050119"
+infotext = "theraPY/" + release + """
+(c) 2003/04 by Andreas "an" Neue
+Based on pyPSYC by Philipp "fippo" Hancke
+Thanks to mju for conceiving the right name at the right time
+
+This software is licensed under the terms of the GPL.
+"""
+
+banner = '* '
+
+config = None
+
+main_window = None
+status_window = None
+authenticator = None
+
+tab_windows = [] 
+
+
+class TabWindow(PSYCObject):
+
+    def __init__(self, netname, label, config, center):
+        global tab_windows
+
+        PSYCObject.__init__(self, netname, center)
+        
+        self.netname = netname
+        
+        self.vbox = gtk.VBox(gtk.FALSE, 0)
+        self.vbox.show()
+        
+        self.hbox = gtk.HBox(gtk.FALSE, 0)
+        self.hbox.show()
+        
+        self.vbox.pack_start(self.hbox, gtk.FALSE, gtk.FALSE, 0)
+
+        self.infobar = gtk.Button(netname)
+        self.hbox.pack_start(self.infobar, gtk.TRUE, gtk.TRUE, 0)
+        self.infobar.show()
+
+        self.closer = gtk.Button('X')
+        self.hbox.pack_start(self.closer, gtk.FALSE, gtk.FALSE, 0)
+        self.closer.show()
+        self.closer.connect('clicked', self.delete)
+
+        self.scrollwin = gtk.ScrolledWindow()
+        self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_ALWAYS)
+
+        self.textview = gtk.TextView()
+        self.textview.set_cursor_visible(gtk.FALSE)
+        self.textview.set_wrap_mode(gtk.WRAP_WORD)
+        self.textview.set_editable(gtk.FALSE)
+        self.textbuf = self.textview.get_buffer()
+
+        self.scrollwin.add(self.textview)
+        self.scrollwin.show()
+
+        font = pango.FontDescription(config.get('ui', 'font'))
+        self.textview.modify_font(font)
+        self.textview.show()
+
+        self.label = label
+        if netname.find('@') != -1:
+            self.label_text= netname[netname.rfind('@'):]
+        elif netname.find('~') != -1:
+            self.label_text = netname[netname.rfind('~')+1:]
+        else:
+            self.label_text = netname
+
+        self.label.set_text(self.label_text + ' *')
+
+        self.vbox.pack_start(self.scrollwin, gtk.TRUE, gtk.TRUE, 0)
+
+        tab_windows.append(self)
+    def get_frame(self):
+        return self.vbox
+    def __del__(self):
+        pass
+
+    def delete(self, foo):
+        global tab_windows
+
+        num = main_window.notebook.page_num(self.vbox)
+        main_window.notebook.remove_page(num)
+        tab_windows.remove(self)
+
+    def append_text(self, text):
+        #iter = self.textbuf.get_end_iter()
+        #self.textbuf.insert(iter, text)
+        #iter = self.textbuf.get_end_iter()
+        #self.textbuf.place_cursor(iter)
+        #mark = self.textbuf.get_insert()
+        ##mark = self.textbuf.get_mark_at_iter(iter)
+        #self.textview.scroll_mark_onscreen(mark)
+
+        iter = self.textbuf.get_end_iter()
+        text = text.encode('utf-8') + '\n'
+        self.textbuf.insert(iter, text)
+        iter = self.textbuf.get_end_iter()
+        self.textbuf.place_cursor(iter)
+        mark = self.textbuf.get_insert()
+        self.textview.scroll_mark_onscreen(mark)
+                
+        cur_page = main_window.notebook.get_current_page()
+        win = None
+        for w in tab_windows:
+            if main_window.notebook.page_num(w.get_frame()) == cur_page:
+                win = w
+        if win != self:
+            #self.label.modify_fg(gtk.STATE_NORMAL,
+            #        self.label.get_colormap().alloc_color('darkred'))
+            self.label.set_text(self.label_text + ' *')
+            
+            
+class MainWindow(Client):
+    
+    def __init__(self, config, entry_handler):
+        global main_window
+        Client.__init__(self, config)
+
+        self.config = config
+                
+        self.entry_handler = entry_handler
+
+        # create a new window
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_size_request(350, 400)
+        self.window.set_title('theraPY')
+        self.window.connect('delete_event', lambda e, w: gtk.main_quit())
+
+        self.vbox = gtk.VBox(gtk.FALSE, 0)
+        self.window.add(self.vbox)
+        self.vbox.show()
+
+        self.notebook = gtk.Notebook()
+        self.notebook.set_tab_pos(gtk.POS_BOTTOM)
+        # window.add(notebook)        
+        self.vbox.pack_start(self.notebook, gtk.TRUE, gtk.TRUE, 0)
+        self.notebook.show()
+
+        self.entry = gtk.Entry()
+        self.entry.set_max_length(256)
+        self.entry.connect('activate', self.enter_callback, self.entry)
+        self.entry.set_text('')
+        self.vbox.pack_start(self.entry, gtk.FALSE, gtk.FALSE, 0)
+        self.font = pango.FontDescription(config.get('ui', 'font'))
+        self.entry.modify_font(self.font)
+        self.entry.show()
+
+        self.statusbar = gtk.Statusbar()
+        self.vbox.pack_start(self.statusbar, gtk.FALSE, gtk.FALSE, 0)
+        self.statusbar.show()
+
+        self.window.connect('key_press_event', self.key_press_callback)
+        self.window.show()
+
+        main_window = self
+
+    def create_user(self, netname):
+        label = gtk.Label()
+        win = QueryWindow(netname, label, self.config, self)
+        self.notebook.append_page(win.get_frame(), label)
+        return win
+                
+    def create_place(self, netname):
+        label = gtk.Label()
+        win = PlaceWindow(netname, label, self.config, self)
+        self.notebook.append_page(win.get_frame(), label)
+        return win
+        
+    def key_press_callback(self, widget, event, *args):
+        key = event.keyval
+        if event.state & gtk.gdk.MOD1_MASK:
+            if key > 47 and key < 58:
+                if key == 48:
+                    key += 10
+                key -= 49
+                try:
+                    self.notebook.set_current_page(key)
+                except:
+                    pass
+                return 1
+            elif key == 110:
+                self.notebook.next_page()
+                return 1
+            elif key == 112:
+                self.notebook.prev_page()
+        return 0
+
+    def enter_callback(self, widget, entry):
+        global tab_windows
+
+        text = entry.get_text()
+
+        cur_page = main_window.notebook.get_current_page()
+        netname = None
+        for w in tab_windows:
+            if main_window.notebook.page_num(w.vbox) == cur_page:
+                netname = w.netname
+                win = w
+
+        self.entry_handler(win, netname, text)
+
+        entry.set_text('')
+
+
+
+def update_notebook_tabs():
+    cur_page = main_window.notebook.get_current_page()
+    win = None
+    for w in tab_windows:
+        if main_window.notebook.page_num(w.vbox) == cur_page:
+            win = w
+    if not win:
+        return
+
+    #win.label.modify_fg(gtk.STATE_NORMAL,
+    #                win.label.get_colormap().alloc_color('black'))
+    win.label.set_text(win.label_text)
+
+    if not main_window.entry.flags() & gtk.HAS_FOCUS:
+        i1 = win.textbuf.get_iter_at_mark(win.textbuf.get_insert())
+        i2 = win.textbuf.get_iter_at_mark(win.textbuf.get_selection_bound())
+        if not i1.compare(i2):
+            main_window.entry.grab_focus()
+            p = main_window.entry.get_text().__len__()
+            main_window.entry.select_region(p, p)
+
+
+class StatusWindow(TabWindow):
+
+    def __init__(self, netname, label, config, center):
+        self.conn = conn
+        TabWindow.__init__(self, netname, label, config, center)
+
+    def msg(self, vars, mc, data, caller):
+        if mc.startswith('_query_password'):
+            authenticator.authenticate(vars, mc, data, caller)
+            return
+        if mc.startswith('_notice'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+        if mc.startswith('_status'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_info'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+            
+        if mc.startswith('_warning'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_failure'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        PSYCObject.msg(self, vars, mc, data, caller)
+               
+    def say(self, text):
+        #text = text.encode(self.config.get('main', 'encoding'))
+        print "input(", text, ")"
+        self.sendmsg({'_target': self.netname,
+                  '_identification': config.get('main', 'uni'),
+                }, '_request_input', text)
+
+
+
+class QueryWindow(TabWindow):
+
+    def __init__(self, netname, label, config, center):
+        TabWindow.__init__(self, netname, label, config, center)
+        self.netname = netname
+        self.config = config
+        
+    def msg(self, vars, mc, data, caller):
+        nickaction = vars['_nick']
+        try:
+            nickaction = nickaction + " " + vars['_action']
+        except:
+            pass
+
+        #template = self.config.get('ui', 'msgtemplate')
+        
+        if mc == '_message_public':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+
+        if mc == '_message_private':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+
+        if mc == '_message_echo_private':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+        
+        if mc == '_message_private_question':
+            nickaction += " fragt"
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+
+        if mc == '_message_private_ask':
+            nickaction += " fragt"
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+        
+        if mc == '_message_private_text_action':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+        
+        if mc == '_status_place_members':
+            # _list_members, _list_members_nicks
+            for i in range(0, len(vars['_list_members'])):
+                self.nicklist.append((vars['_list_members'][i], 
+                    vars['_list_members_nicks'][i]))
+            return
+        
+        if mc.startswith('_notice_place_leave'):
+            return
+        
+        if mc.startswith('_notice_place_enter'):
+            self.nicklist.append((vars['_source'], vars['_nick']))
+            return
+        
+        if mc.startswith('_status'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+ 
+        if mc.startswith('_info'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+ 
+        if mc.startswith('_notice'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_failure'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_error'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_warning'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+            
+        PSYCObject.msg(self, vars, mc, data, caller)
+            
+    def say(self, text):
+        me = config.get('main', 'uni')
+        text = text.encode(self.config.get('main', 'encoding'))
+        print "talk(", text, ")"
+        self.sendmsg({'_target': self.netname,
+                      '_identification': config.get('main', 'uni'),
+                      '_nick': config.get('main', 'nick')},
+                     '_message_private', text)
+   
+
+
+class PlaceWindow(TabWindow):
+
+    def __init__(self, netname, label, config, center):
+        TabWindow.__init__(self, netname, label, config, center)
+        self.nicklist = []
+        self.netname = netname
+        self.config = config
+                        
+    def msg(self, vars, mc, data, caller):
+        #print "got PlaceWindow.msg(", mc, ") from", caller
+        nickaction = vars['_nick']
+        try:
+            nickaction = nickaction + " " + vars['_action']
+        except:
+            pass
+        
+        #template = self.config.get('ui', 'msgtemplate')
+                
+        if mc == '_message_public':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+
+        if mc == '_message_private':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+
+        if mc == '_message_echo_public':
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+        
+        if mc == '_message_public_question':
+            nickaction += " fragt"
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+
+        if mc == '_message_public_ask':
+            nickaction += " fragt"
+            self.append_text('%s: %s' % (nickaction, data))
+            return
+        
+        if mc == '_message_public_text_action':
+            self.append_text(template % (nickaction, data))
+            return
+        
+        if mc == '_status_place_members':
+            # _list_members, _list_members_nicks
+            for i in range(0, len(vars['_list_members'])):
+                self.nicklist.append((vars['_list_members'][i], 
+                    vars['_list_members_nicks'][i]))
+            return
+        
+        if mc.startswith('_notice_place_leave'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+        
+        if mc.startswith('_notice_place_enter'):
+            #self.nicklist.append((vars['_source'], vars['_nick']))
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_echo_place_enter'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_echo_place_leave'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+         
+        if mc.startswith('_status'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+ 
+        if mc.startswith('_info'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+ 
+        if mc.startswith('_notice'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_failure'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_error'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+
+        if mc.startswith('_warning'):
+            self.append_text(banner + parsetext(vars, mc, data))
+            return
+                                
+        PSYCObject.msg(self, vars, mc, data, caller)
+            
+    def say(self, text):
+        text = text.encode(self.config.get('main', 'encoding'))
+        print "say(", text, ")"
+        self.sendmsg({'_target': self.netname,
+                      '_identification': config.get('main', 'uni'),
+                      '_nick': config.get('main', 'nick')},
+                     '_message_public', text)
+
+
+
+
+def poll():
+    asyncore.poll(timeout = 0.0)
+    gtk.timeout_add(250, poll)
+    update_notebook_tabs()
+
+def cmd(win, text):
+    #text = text.encode(win.config.get('main', 'encoding'))
+    print "cmd(", text, ")"
+    win.sendmsg({'_target': win.netname,
+                  '_identification': config.get('main', 'uni'),
+                }, '_request_execute', text)
+
+def entry_handler(win, netname, text):
+    global config
+    """
+    if text and text[0] == "/":
+        win.sendmsg({'_target': config.get('main', 'uni')},
+                    '_request_execute', text)
+    else:
+        win.sendmsg({'_target': config.get('main', 'uni')},
+                    '_request_execute',
+                    '/msg ' + win.netname + ' ' + text)
+    """    
+    if text and text[0] == '/':
+        if text.startswith('/q ') or \
+           text.startswith('/query '):
+            user = text.split(' ')[1]
+            u = parseURL(config.get('main', 'uni'))
+            if user.find('~') == -1:
+                user = 'psyc://' + u['host'] + '/~' + user
+            elif user[0] == '~':
+                user = 'psyc://' + u['host'] + '/' + user
+            QueryWindow(user, None, config, main_window)
+                        
+        elif text.startswith('/j ') or \
+             text.startswith('/join '):
+            place = text.split(' ')[1]
+            u = parseURL(config.get('main', 'uni'))
+            if place.find('@') == -1:
+                place = 'psyc://' + u['host'] + '/@' + place
+            elif place[0] == '@':
+                place = 'psyc://' + u['host'] + '/' + place
+            print 'join', place
+            win.sendmsg({'_target': place,
+                         '_nick': config.get('main', 'nick')},
+                        '_request_enter', '')
+
+        elif text == '/pa' or \
+             text == '/part':
+            try:
+                win.sendmsg({'_target' : win.netname},
+                                '_request_leave', '')
+            except:
+                print "failed to leave current place"
+                            
+        elif text.startswith('/pa ') or \
+             text.startswith('/part '):
+            try:
+                win.sendmsg({'_target' : text.split(' ')[1]},
+                            '_request_leave', '')
+            except:
+                print "failed to leave that place"
+                        
+#       elif text.startswith('/quit'):
+#           pass
+#           
+#       elif text.startswith('/m '):
+#           pass
+#           
+#       elif text.startswith('/me '):
+#           pass
+#           
+        else:
+            try:
+                        # should use the text[1..] really! TODO
+                cmd(win, text)
+            except:
+                pass
+
+    elif text:
+        #print "calling say(", text, ") in", win
+        win.say(text)
+
+
+
+
+if __name__ == '__main__':
+    #gc.set_debug(gc.DEBUG_LEAK)
+
+    # pypsyc should one day implement http://psyc.pages.de/storage
+    # but that's something we can look into on some much later day.
+    # in the meantime we could provide for defaults if therapyrc
+    # is missing. what about..  psyc://beta.ve.symlynx.com/~$USER
+    config = ConfigParser.ConfigParser()
+    if len(sys.argv) == 2:
+        config_file = sys.argv[1]
+    else:
+        config_file = os.getenv('HOME') + '/.psyc/therapyrc'
+    config.read(config_file)
+
+    main_window = MainWindow(config, entry_handler)
+
+    authenticator = Authenticator(main_window, 
+                                  config.get('main', 'uni'),
+                                  config.get('main', 'password'))
+  
+    status_label = gtk.Label('Status') 
+    status_window = StatusWindow(config.get('main', 'uni'), status_label,
+                                 config, main_window)
+    main_window.notebook.append_page(status_window.get_frame(), status_label)
+    status_window.append_text(infotext)
+
+    main_window.online()
+    
+    if not twisting:
+        poll()
+        gtk.main()
+    else:
+        l = task.LoopingCall(update_notebook_tabs)
+        l.start(0.25) # 250msec
+        reactor.run()
+
+    print "cleaning up"
+    cmd(status_window, "QUIT")
+
+
+# vim:expandtab

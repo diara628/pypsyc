@@ -1,0 +1,31 @@
+BUGS:
+
+fippo hat alles wieder zerschossen... ;)
+    error: uncaptured python exception, closing channel <pypsyc.PSYC.PSYCProtocol connected 213.73.91.20:4404 at 0xb6ec50ac> (exceptions.TypeError:not enough arguments for format string [/usr/lib/python2.3/asyncore.py|read|69] [/usr/lib/python2.3/asyncore.py|handle_read_event|390] [/usr/lib/python2.3/asynchat.py|handle_read|105] [/V/dev/therapy/pypsyc/MixedReceiver.py|collect_incoming_data|44] [/V/dev/therapy/pypsyc/PSYC.py|lineReceived|42] [/V/dev/therapy/pypsyc/PSYC.py|packetReceived|66] [/V/dev/therapy/pypsyc/center.py|msg|207] [./therapy|msg|404])
+    say( hullo )
+    error: uncaptured python exception, closing channel <pypsyc.PSYC.PSYCProtocol connected 213.73.91.20:4404 at 0xb6ec50ac> (socket.error:(9, 'Bad file descriptor') [/usr/lib/python2.3/asynchat.py|initiate_send|218] [/usr/lib/python2.3/asyncore.py|send|337])
+    TypeError: main_quit() takes no arguments (2 given)
+
+_message_invite
+
+/me fixen
+
+Tab-Leiste im GTK-Interface: Scroller, wenn Tabs breiter als Fenster sind
+
+/all in GoodAdvice tuts nicht: _target mitgeben
+
+
+FEATURES:
+
+farben via config einstellbar
+fonts via config einstellbar
+
+zusaetzliche UIs (wx, curses etc.)
+
+Userliste in Raeumen
+
+Friendlist
+
+Floating Windows
+
+anclickbare links

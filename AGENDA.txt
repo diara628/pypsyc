@@ -1,0 +1,70 @@
+Meaning of states:
+X: done
+-: started or halfway done
+?: I have no clue what this is about but it sounds important
+ : nothing done yet but may have a clue how to do it
+ 	(note: then make a sketch)
+  
+VERSION 0.1
+===========
+	[X]	connect to a main psyc UNI via TCP
+	[X]	make it working again automatically, write a package
+	[X]	configfile parsing
+	[X]	implement psyctext parser
+	[X]	actually it is a mmptext-parser as well
+	[X]	parse MMP and PSYCpackets
+	[ ]	implement augment und diminish, but atm muve does not support it
+	[X]	create state objects / machines
+	[X]	handler architecture for psyc functions (requires state objects)
+	[X]	interface definition (taken from bitkoenig's jaPSYC)
+	[X]	basic layout for the classes and objects
+	[X]	support for multiple GUI toolkits by design
+	[X]	make gui main objects differ from application objects
+    	[X] 	draw a communicative sketch of how it works 
+	[X] 	debug GUI
+
+VERSION 0.2
+===========
+	[ ]	no fullstate sending
+	[ ]	UDP support for some things
+	[?]	what things? listen and wait what comes...
+	[ ]	TCP server listening on port 4404
+	[?]	authorization checking -> psycauth
+	[ ]	UDP server listening on port 4404
+	[ ]	same as for tcp
+	[X]	implement graphical room interfaces	
+	[X]	use user input
+	[X]	implement graphical user interfaces
+	[-]	implement graphical friendlist
+	[X]	think about command syntax (like: "/" for direct commands, "#" for uni commands, "!" for sending rooms a request_execute
+			
+VERSION 0.3
+===========
+	[ ]	connect to friend unl's if you want to talk to them and they
+		are using a psyc interface (ask lynx for remote buddies)
+	[-]	connect to distant rooms (how does it work? ask lynx)
+        	is it even done via a server or is it the clients job?
+
+VERSION 0.4
+===========
+	[ ]	parse all messages from lynx's psyced meaningfully
+
+VERSION 0.5
+===========
+	[-]	find psyc protocol gagdets and errors and fix them
+
+VERSION 0.6
+===========
+	[ ]	make a reference implementation testsuite (tests are good)
+  		that identifies severe and not-so-important lacks in
+		clients and/or servers. all real psyc clients should support a
+		minimum set of commands
+	
+			
+VERSION 1.0
+===========
+	[-]	"plug-in" gui support (Tkinter, pyGTK, pyQT, wxPython, ...)
+		Note: basically you only need to implement some classes...
+		Tkinter GUI may serve as an example for more powerful clients
+	[-]	user-defined handler architecture for "scripting"
+		("users" have to write packages anyway)

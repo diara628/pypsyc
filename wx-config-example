@@ -1,0 +1,8 @@
+# this goes to ~/.pypsyc/wx-config
+# or where ever you told pyPSYC it is
+[gui]
+wx_friend_size = 145, 291
+wx_room_size = 431, 522
+wx_friend_pos = 713, 814
+wx_room_pos = 712, 258
+

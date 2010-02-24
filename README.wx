@@ -1,0 +1,55 @@
+WELCOME TO pyPSYC(with a funky wxWindows GUI)
+
+bugs & black-mail to tim@rash-media.de
+
+-> HOWTO TURN THE BEAST ALIVE
+
+    * install wxPython from www.wxpython.org
+
+    * extract the tar
+
+    * edit config-example and put it into ~/.pypsyc/config
+    
+    * edit wx-config-example and put it into ~/.pypsyc/wx-config only copying it
+    there should be enough and you shouldn't edit it afterwards, it's only a 
+    palce for the gui to remeber things like size, position and so on
+    
+    * windows users should only rename the two files, instead of moving them:
+    
+        config-example -> config
+        wx-config-example -> wx-config
+        
+    * windows users have to edit chat_client.py to make sure it looks for the 
+    config file in the right place and you have to edit the GUI/wx/devGui.py 
+    file also.
+    
+    * you now should be setup and ready to explore the world of psyc
+    
+
+-> OFFICIAL NOTES
+
+    * you need wxPython 2.4.1 and Python 2.2 other versions might also work but 
+    who knows
+
+
+-> INOFFICIAL NOTES
+
+    * versions of wxPython <2.4.1 have a nasty bug that prevents the msg window
+    from scrolling so you should upgrade
+    
+    * we have a nick completer now!!! shout out loud: "Hurraayy!"
+    
+    * bribe marder if you want a shiny-one-click windows installer
+    
+    * if you don't like the default speak action look into devGui.yp and change
+    if, shoudl be quite easy
+
+
+-> STATUS OF THE BEAST
+        
+    * there are reports that pyPSYC crashes with win2k, we are looking into that
+    
+    * querys don't work
+    
+    * you can't close the tabs ;]] 
+

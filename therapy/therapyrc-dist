@@ -1,0 +1,21 @@
+# ~/.therapyrc
+# Use this file as base for your configuration
+#
+# $Id: therapyrc-dist,v 1.8 2005/12/07 10:26:24 lynx Exp $
+
+[main]
+uni: psyc://psyced.org/~an
+port: 4404
+password: supergeheim
+nick: an
+encoding: iso-8859-1
+
+[ui]
+font: Courier 9 
+msgtemplate: [nick]: [text]
+
+[library]
+compression: off
+auth_sha: on
+auth_plain: on
+debug: off

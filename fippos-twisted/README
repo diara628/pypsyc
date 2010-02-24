@@ -1,0 +1,24 @@
+pyPSYC - asyncore based library for PSYC 
+
+The application programming interface (API) of this library is stable,
+says fippo. But he left it unmaintained since 2005.
+
+
+News at http://about.psyc.eu/pypsyc
+Download by anonCVS from the same server as psyced.
+    :pserver:anonymous@cvs.psyced.org:/CVS/anoCVS
+
+
+QUESTIONS? 
+/tell psyc://psyced.org/~fippo or come to psyc://psyced.org/@welcome
+
+AUTHORS
+    Philipp Hancke
+	<psyc://psyced.org/~fippo>
+
+    Tim Head
+	<psyc://psyced.org/~betatim>
+
+    Andreas Neue
+	<psyc://psyced.org/~an>
+

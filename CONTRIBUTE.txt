@@ -1,0 +1,21 @@
+    Should you wish to contribute to this program, you can receive a
+    write access to the software repository from symlynX. By checking
+    code in, you grant us permission to license your contribution under
+    both the GNU General Public License and under other licenses.
+
+    With the act of checking into the software repository, you guarantee
+    that you are either the author and copyright owner of the contribution
+    you are making, or that you have a license to use said contribution in
+    a way compatible with our terms of use. If you fail to do so, you
+    remain the sole responsible for your acting; no part of the
+    responsibility will be transferred to symlynX.
+
+    This means, for example, that you cannot contribute code elements
+    which stem from an other GPL project, as this would not comply with
+    the dual licensing requirement described above.
+
+
+
+... if you don't like these terms, feel free to start your own repository ...
+    or maybe just talk with us about it?
+

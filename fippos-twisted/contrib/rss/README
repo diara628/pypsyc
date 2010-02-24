@@ -1,0 +1,9 @@
+Purpose:
+this is designed to be a news distributing server only. It fetches RSS feeds
+
+Running:
+    twistd -noy rss_server.py
+This code depends on
+- rss.py from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/277099
+- feedparser.py from http://diveintomark.org/projects/feed_parser/
+- twisted python (python is less fun without)

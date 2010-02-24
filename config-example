@@ -1,0 +1,15 @@
+# should be changed to support http://www.psyc.eu/storage
+
+[main]
+uni: psyc://host/~user
+password: geheim
+
+[packages]
+friends: enabled
+conferencing: disabled
+biff: disabled
+user: disabled
+devel: enabled
+
+[gui]
+type: wx

@@ -1,0 +1,27 @@
+
+  theraPY, a PSYC client written in Python
+  Copyright (C) 2003 by Andreas "an" Neue
+  theraPY is based on pyPSYC by Philipp "fippo" Hancke
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of version 2 of the GNU General Public License as
+    published by the Free Software Foundation.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+  Taken from lynx license for the psycMUVE:
+
+  SPECIAL ENCOURAGEMENTS FOR PSYC DEVELOPERS.
+
+  1. Whenever you make derivates of this library publically available, be it
+  in source or binary form, please keep all PSYC network transactions
+  according to the current specification of the PSYC protocol as available
+  from http://psyc.pages.de. This will help keeping PSYC implementations
+  interoperable.
+
+  2. Whenever you release a derivative work of this software, please inform
+  the PSYC community of the existence of your new software by filling out
+  the registration form at http://psyc.pages.de.

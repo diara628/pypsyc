@@ -1,0 +1,10 @@
+$Id: README,v 1.2 2003/09/22 18:54:51 an Exp $
+
+pypsyc was slightly changed for therapy. Hopefully, i'll get that clean one
+day.
+
+To run therapy, you need Python (tested with 2.3), pypsyc (provided in
+this Package), PyGTK 1.99 and GTK+ >2.0. You can obtain PyGTK from
+http://www.daa.com.au/~james/software/pygtk/.
+
+Have fun.

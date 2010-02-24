@@ -1,0 +1,8 @@
+-"AuthModul" muss erweitert (Passwort) und aus twisted_client.py verschoben
+werden
+-Ereignisse (bzw. alles außer Nachrichten) werden noch nicht angezeigt
+-private messages und in andere Räume joinen funktionieren noch nicht
+-Einrichtungsassistent oder etwas in die Richtung wäre nicht schlecht
+-Schließen funktioniert nicht (man muss im Moment /quit in den Client, Ctrl-C
+im Konsolenfenster eingeben und Fenster schließen)
+-noch viel mehr...

@@ -1,0 +1,9 @@
+$Id: INSTALL,v 1.3 2003/09/22 18:57:09 an Exp $
+
+therapy via CVS ziehen
+pypsyc via CVS ziehen
+pypsyc nach therapy/pypsyc kopieren
+therapyrc-dist nach ~/.therapyrc kopieren und entsprechend anpassen
+therapy starten und freut sich drauf :)
+
+Ihr braucht pygtk und gtk+ 2.0 (siehe README)

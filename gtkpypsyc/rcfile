@@ -1,0 +1,6 @@
+[main]
+uni: psyc://your.host/~yournick
+password: yourpass
+
+[interface]
+splashscreen: pix/symlynX.gif

@@ -1,0 +1,24 @@
+pyPSYC depends on python (tested with 2.2.1) and tkinter
+(note: if you want you can write qt, gtk, wxpython gui's etc)
+also, this version depends on twisted python from twistedmatrix.com
+
+prior to starting you need to edit the config-example file and move it
+to $HOME/.pypsyc/config
+
+on windows keep it in the same directory as chat_client.py and change
+line 22
+  config.read(os.getenv("HOME") + "/.pypsyc/config")
+to
+  config.read("config")
+This will soon be automated somehow. 
+start pyPSYC with `python chat_client.py`
+
+there are two command styles... local command which start with "/"
+currently there are two of them, "/join psyc://host/@room"
+(atm this works only if you are connected to host)
+and "/part" which parts the current room.
+/quit is also supported, although atm it is semantically an alias for #quit
+
+the other command style is commands starting with "#"
+they are handled by your UNI with a _request_execute
+
