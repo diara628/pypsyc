@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # be warned this is the _dev_ version of the wx gui
 # perhaps it will work, perhaps it's all borked up,
 # this is a plazground shouldn't be used on a day to
